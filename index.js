@@ -24,12 +24,21 @@ async function run() {
         const database = client.db("motodeal");
         const carsCollection = database.collection("cars");
 
-        // Get All Cars
+        // Get All Cars or Limited Cars
         app.get('/cars', async (req, res) => {
+            const page = parseInt(req.query.page);
+            const size = parseInt(req.query.size);
             const query = {};
             const cursor = carsCollection.find(query);
-            const result = await cursor.toArray();
-            res.send(result);
+            let cars;
+
+            // If Page or Size exist. (else, response with all cars)
+            if (page || size) {
+                cars = await cursor.skip(page * size).limit(size).toArray();
+            } else {
+                cars = await cursor.toArray();
+            }
+            res.send(cars);
         });
 
         // Get Single Car
@@ -40,7 +49,7 @@ async function run() {
             }
             const result = await carsCollection.findOne(query);
             res.send(result);
-        })
+        });
 
     } finally {
         //   await client.close();
