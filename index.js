@@ -2,6 +2,7 @@ const express = require('express');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 const cors = require('cors');
+const { get } = require('express/lib/response');
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -48,6 +49,17 @@ async function run() {
                 _id: ObjectId(id)
             }
             const result = await carsCollection.findOne(query);
+            res.send(result);
+        });
+
+        // Delete Car
+        app.delete('/car/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = {
+                _id: ObjectId(id)
+            }
+
+            const result = await carsCollection.deleteOne(query);
             res.send(result);
         });
 
