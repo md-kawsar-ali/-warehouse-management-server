@@ -97,6 +97,28 @@ async function run() {
             res.send(result);
         });
 
+        // Update Car Details
+        app.put('/cars/:id', async (req, res) => {
+            const id = req.params.id;
+            const { model, img, price, year, engine, body, transmission, color, doors, quantity, dealer } = req.body;
+            const filter = {
+                _id: ObjectId(id)
+            }
+
+            const options = {
+                upsert: true
+            }
+
+            const updateDoc = {
+                $set: {
+                    model, img, price, year, engine, body, transmission, color, doors, quantity, dealer
+                }
+            }
+
+            const result = await carsCollection.updateOne(filter, updateDoc, options);
+            res.send(result);
+        })
+
     } finally {
         //   await client.close();
     }
