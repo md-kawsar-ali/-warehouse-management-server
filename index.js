@@ -87,6 +87,17 @@ async function run() {
             res.send(result);
         });
 
+        // Delete Car
+        app.delete('/car/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = {
+                _id: ObjectId(id)
+            }
+
+            const result = await carsCollection.deleteOne(query);
+            res.send(result);
+        });
+
     } finally {
         //   await client.close();
     }
