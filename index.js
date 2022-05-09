@@ -119,6 +119,14 @@ async function run() {
             res.send(result);
         })
 
+        // Add New Car
+        app.post('/add', async (req, res) => {
+            const car = req.body;
+
+            const result = await carsCollection.insertOne(car);
+            res.send(result);
+        })
+
     } finally {
         //   await client.close();
     }
