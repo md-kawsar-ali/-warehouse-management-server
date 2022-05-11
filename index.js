@@ -41,6 +41,26 @@ async function run() {
             res.send(cars);
         });
 
+        // Get Cars Of Specific User
+        app.get('/cars/user', async (req, res) => {
+            const page = parseInt(req.query.page);
+            const size = parseInt(req.query.size);
+            const uid = req.query.uid;
+            const query = {
+                'uid': uid
+            };
+            const cursor = carsCollection.find(query).sort({ '_id': -1 });
+            let cars;
+
+            // If Page or Size exist. (else, response with all cars)
+            if (page || size) {
+                cars = await cursor.skip(page * size).limit(size).toArray();
+            } else {
+                cars = await cursor.toArray();
+            }
+            res.send(cars);
+        });
+
         // Get Single Car
         app.get('/cars/:id', async (req, res) => {
             const id = req.params.id;
@@ -130,6 +150,13 @@ async function run() {
         // Total Car Count
         app.get('/carCount', async (req, res) => {
             const count = await carsCollection.countDocuments();
+            res.send({ count });
+        });
+
+        // Total Car Count for Specific User
+        app.get('/carCount/:uid', async (req, res) => {
+            const uid = req.params.uid;
+            const count = await carsCollection.countDocuments({ 'uid': uid });
             res.send({ count });
         });
 
