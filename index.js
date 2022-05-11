@@ -1,5 +1,6 @@
 const express = require('express');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const cors = require('cors');
 const app = express();
@@ -13,6 +14,24 @@ app.use(express.json());
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.i1sr7.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
+// Verify JWT
+const verifyJWT = (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+        return res.status(401).send({ message: 'unauthorized' });
+    }
+
+    const token = authHeader.split(' ')[1];
+
+    jwt.verify(token, process.env.ACCESS_TOKEN, (err, decoded) => {
+        if (err) {
+            return res.status(403).send({ message: 'forbidden' });
+        }
+        req.decoded = decoded;
+        next();
+    });
+}
+
 // Welcome
 app.get('/', (req, res) => {
     res.send('Welcome to the Inventory Management Server!');
@@ -23,6 +42,13 @@ async function run() {
         await client.connect();
         const database = client.db("motodeal");
         const carsCollection = database.collection("cars");
+
+        // Authentication
+        app.post('/login', async (req, res) => {
+            const { uid } = req.body;
+            const accessToken = jwt.sign({ uid }, process.env.ACCESS_TOKEN, { expiresIn: '1d' });
+            res.send({ accessToken });
+        });
 
         // Get All Cars or Limited Cars
         app.get('/cars', async (req, res) => {
@@ -42,7 +68,7 @@ async function run() {
         });
 
         // Get Cars Of Specific User
-        app.get('/cars/user', async (req, res) => {
+        app.get('/cars/user', verifyJWT, async (req, res) => {
             const page = parseInt(req.query.page);
             const size = parseInt(req.query.size);
             const uid = req.query.uid;
@@ -154,7 +180,7 @@ async function run() {
         });
 
         // Total Car Count for Specific User
-        app.get('/carCount/:uid', async (req, res) => {
+        app.get('/carCount/:uid', verifyJWT, async (req, res) => {
             const uid = req.params.uid;
             const count = await carsCollection.countDocuments({ 'uid': uid });
             res.send({ count });
