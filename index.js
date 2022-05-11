@@ -29,7 +29,7 @@ async function run() {
             const page = parseInt(req.query.page);
             const size = parseInt(req.query.size);
             const query = {};
-            const cursor = carsCollection.find(query);
+            const cursor = carsCollection.find(query).sort({ '_id': -1 });
             let cars;
 
             // If Page or Size exist. (else, response with all cars)
@@ -117,7 +117,7 @@ async function run() {
 
             const result = await carsCollection.updateOne(filter, updateDoc, options);
             res.send(result);
-        })
+        });
 
         // Add New Car
         app.post('/add', async (req, res) => {
@@ -125,7 +125,13 @@ async function run() {
 
             const result = await carsCollection.insertOne(car);
             res.send(result);
-        })
+        });
+
+        // Total Car Count
+        app.get('/carCount', async (req, res) => {
+            const count = await carsCollection.countDocuments();
+            res.send({ count });
+        });
 
     } finally {
         //   await client.close();
