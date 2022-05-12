@@ -72,19 +72,25 @@ async function run() {
             const page = parseInt(req.query.page);
             const size = parseInt(req.query.size);
             const uid = req.query.uid;
-            const query = {
-                'uid': uid
-            };
-            const cursor = carsCollection.find(query).sort({ '_id': -1 });
-            let cars;
+            const decodedUid = req.decoded.uid;
 
-            // If Page or Size exist. (else, response with all cars)
-            if (page || size) {
-                cars = await cursor.skip(page * size).limit(size).toArray();
+            if (decodedUid === uid) {
+                const query = {
+                    'uid': uid
+                };
+                const cursor = carsCollection.find(query).sort({ '_id': -1 });
+                let cars;
+
+                // If Page or Size exist. (else, response with all cars)
+                if (page || size) {
+                    cars = await cursor.skip(page * size).limit(size).toArray();
+                } else {
+                    cars = await cursor.toArray();
+                }
+                res.send(cars);
             } else {
-                cars = await cursor.toArray();
+                res.status(403).send({ message: 'forbidden access' })
             }
-            res.send(cars);
         });
 
         // Get Single Car
@@ -182,8 +188,14 @@ async function run() {
         // Total Car Count for Specific User
         app.get('/carCount/:uid', verifyJWT, async (req, res) => {
             const uid = req.params.uid;
-            const count = await carsCollection.countDocuments({ 'uid': uid });
-            res.send({ count });
+            const decodedUid = req.decoded.uid;
+
+            if (decodedUid === uid) {
+                const count = await carsCollection.countDocuments({ 'uid': uid });
+                res.send({ count });
+            } else {
+                res.status(403).send({ message: 'forbidden access' })
+            }
         });
 
     } finally {
